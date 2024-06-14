@@ -1,8 +1,10 @@
-import { PostCreateSchema, isValidUser } from '$lib/types.js';
-import { redirect } from '@sveltejs/kit';
+import { isAuthenticated } from '$lib/db/auth.js';
+import { handleError } from '$lib/helpers.js';
+import { PostCreateSchema } from '$lib/types.js';
+import { fail, redirect } from '@sveltejs/kit';
 
 export const load = async ({ locals }) => {
-	if (!locals.pocketBase.authStore.isValid || !isValidUser(locals.pocketBase.authStore.model)) {
+	if (!isAuthenticated(locals.pocketBase.authStore)) {
 		throw redirect(303, '/auth');
 	}
 	return {};
@@ -10,8 +12,7 @@ export const load = async ({ locals }) => {
 
 export const actions = {
 	newPost: async ({ locals, request }) => {
-		const authModel = locals.pocketBase.authStore.model;
-		if (!locals.pocketBase.authStore.isValid || !isValidUser(authModel)) {
+		if (!isAuthenticated(locals.pocketBase.authStore)) {
 			throw redirect(303, '/auth');
 		}
 
@@ -31,26 +32,18 @@ export const actions = {
 				content,
 				tags,
 				language,
-				user: authModel.id
+				user: locals.pocketBase.authStore.model.id
 			});
 
-      if (record.id) {
-        throw redirect(303, `/posts/${record.id}`);
-      }
-  
-      throw redirect(303, '/');
-      
-		} catch (error) {
-      console.log(error);
-      if (error instanceof Error) {
-        return {
-          message: error.message,
-        };
-      }
+			if (record.id) {
+				return {
+					id: record.id
+				};
+			}
 
-      return {
-        message: "An error occurred while uploading code snippet.",
-      };
+			throw fail(500, { error: 'An error occurred while creating the post.' });
+		} catch (error) {
+			handleError('new-post', 'An error occurred while uploading code snippet.')(error);
 		}
 	}
 };

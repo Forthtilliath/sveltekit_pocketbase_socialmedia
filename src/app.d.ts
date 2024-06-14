@@ -9,6 +9,11 @@ declare global {
 			pocketBase: PocketBase;
 			pocketBaseAdmin: PocketBase;
 		}
+
+		type LoadFetch = (
+			input: URL | RequestInfo,
+			init?: RequestInit | undefined
+		) => Promise<Response>;
 		// interface PageData {}
 		// interface PageState {}
 		// interface Platform {}

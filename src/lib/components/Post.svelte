@@ -28,7 +28,7 @@
 	<h1>{post.title}</h1>
 
 	{#if isAuthor}
-		<form action="/posts/{post.id}?/deletePost" method="post">
+		<form action="/{post.id}?/deletePost" method="post">
 			<Button size="icon" variant="destructive">
 				<iconify-icon icon="ph:trash" />
 			</Button>
@@ -65,7 +65,7 @@
 	<div class="interactions">
 		{#if authModel}
 			<form
-				action="/posts/{post.id}?/toggleLiked&redirect={$page.url.pathname}"
+				action="/{post.id}?/toggleLiked&redirect={$page.url.pathname}"
 				method="post"
 				use:enhance={() => {
 					if (post && authModel) {

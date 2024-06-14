@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Button from '$lib/components/Button.svelte';
-
-	// export let data;
+	import { invalidateAll, goto } from '$app/navigation';
 
 	let title = '';
 	let language = '';
@@ -22,6 +21,12 @@
 		action="/new?/newPost"
 		use:enhance={({ formData }) => {
 			formData.append('tags', JSON.stringify(tags));
+
+			return async ({ result }) => {
+				if (result.type === 'success' && result?.data?.id) {
+					await goto(`/${result.data.id}`);
+				}
+			};
 		}}
 	>
 		<h1>Create a New Code Snippet</h1>
@@ -37,7 +42,7 @@
 		<div class="input-container">
 			<h2>Language</h2>
 
-			<select name="language" id="" bind:value={language}>
+			<select name="language" bind:value={language}>
 				<option value="cs">C#</option>
 				<option value="c">C</option>
 				<option value="cpp">C++</option>

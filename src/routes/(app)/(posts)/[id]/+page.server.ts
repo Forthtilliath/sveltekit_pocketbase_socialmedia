@@ -1,11 +1,12 @@
-import { isValidPost, isValidUser, type Post } from '$lib/types.js';
+import { isAuthenticated } from '$lib/db/auth.js';
+import { handleError } from '$lib/helpers.js';
+import { isValidPost, type Post } from '$lib/types.js';
 import { redirect } from '@sveltejs/kit';
 import type { RecordModel } from 'pocketbase';
 
 export const actions = {
 	toggleLiked: async ({ locals, params, url }) => {
-		const authModel = locals.pocketBase.authStore.model;
-		if (!locals.pocketBase.authStore.isValid || !isValidUser(authModel)) {
+		if (!isAuthenticated(locals.pocketBase.authStore)) {
 			throw redirect(303, '/auth');
 		}
 
@@ -26,27 +27,19 @@ export const actions = {
 				throw new Error('Invalid post');
 			}
 
-			const isLiked = post.likes.includes(authModel.id);
+			const isLiked = post.likes.includes(locals.pocketBase.authStore.model.id);
 
 			if (isLiked) {
 				await locals.pocketBaseAdmin.collection('posts').update(postRecord.id, {
-					'likes-': authModel.id
+					'likes-': locals.pocketBase.authStore.model.id
 				});
 			} else {
 				await locals.pocketBaseAdmin.collection('posts').update(postRecord.id, {
-					'likes+': authModel.id
+					'likes+': locals.pocketBase.authStore.model.id
 				});
 			}
 		} catch (error) {
-			console.log(error);
-			if (error instanceof Error) {
-				return {
-					message: error.message
-				};
-			}
-			return {
-				message: 'Unknown error occurred while toggling like'
-			};
+			handleError('toggle-liked', 'An error occurred while toggling like')(error);
 		}
 
 		const customRedirectPath = url.searchParams.get('redirectTo');
@@ -55,12 +48,11 @@ export const actions = {
 			throw redirect(303, `${url.origin}${customRedirectPath}`);
 		}
 
-		throw redirect(303, `/posts/${params.id}`);
+		throw redirect(303, `/${params.id}`);
 	},
 
 	deletePost: async ({ locals, params }) => {
-		const authModel = locals.pocketBase.authStore.model;
-		if (!locals.pocketBase.authStore.isValid || !isValidUser(authModel)) {
+		if (!isAuthenticated(locals.pocketBase.authStore)) {
 			throw redirect(303, '/auth');
 		}
 
@@ -81,23 +73,15 @@ export const actions = {
 				throw new Error('Invalid post');
 			}
 
-			const ownsPost = post.user.id === authModel.id;
+			const ownsPost = post.user.id === locals.pocketBase.authStore.model.id;
 
 			if (!ownsPost) {
-				throw new Error('Cannont delete post');
+				throw new Error('Cannot delete post');
 			}
 
 			await locals.pocketBaseAdmin.collection('posts').delete(postRecord.id);
 		} catch (error) {
-			console.log(error);
-			if (error instanceof Error) {
-				return {
-					message: error.message
-				};
-			}
-			return {
-				message: 'Unknown error occurred while deleting post'
-			};
+			handleError('delete-post', 'An error occurred while deleting a post')(error);
 		}
 
 		throw redirect(303, '/');

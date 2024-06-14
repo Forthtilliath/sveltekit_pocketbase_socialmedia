@@ -4,14 +4,14 @@ import { error } from '@sveltejs/kit';
 import type { RecordModel } from 'pocketbase';
 import { get } from 'svelte/store';
 
-export async function getAllPosts(): Promise<(Post & RecordModel)[]> {
+export async function getAllPosts(fetch: App.LoadFetch): Promise<(Post & RecordModel)[]> {
 	const pbInstance = get(pb);
 	if (!pbInstance) error(503, 'Service unavailable. Please try again later.');
-	// if (!pbInstance) return [];
 
 	const posts = await pbInstance.collection<Post & RecordModel>('posts').getList(1, 15, {
 		expand: 'user',
-		sort: '-created'
+		sort: '-created',
+		fetch
 	});
 
 	return posts.items.reduce<(Post & RecordModel)[]>((prev, post) => {
@@ -29,7 +29,7 @@ export async function getAllPosts(): Promise<(Post & RecordModel)[]> {
 	}, []);
 }
 
-export async function getPostById(id: string) {
+export async function getPostById(id: string, fetch: App.LoadFetch) {
 	const pbInstance = get(pb);
 	if (!pbInstance) {
 		return null;
@@ -37,7 +37,8 @@ export async function getPostById(id: string) {
 
 	try {
 		const result = await pbInstance.collection('posts').getOne(id, {
-			expand: 'user'
+			expand: 'user',
+			fetch
 		});
 
 		const post = result;
@@ -55,7 +56,6 @@ export async function getPostById(id: string) {
 		return post;
 	} catch (error) {
 		if (error instanceof Error) {
-			console.log('====', error.message);
 			return {
 				message: error.message
 			};
@@ -64,4 +64,33 @@ export async function getPostById(id: string) {
 			message: 'Unknown error'
 		};
 	}
+}
+
+export async function getPostsByUserid(userid: string, fetch: App.LoadFetch) {
+	const pbInstance = get(pb);
+	if (!pbInstance) {
+		return null;
+	}
+
+	const posts = await pbInstance.collection('posts').getFullList<Post & RecordModel>({
+		filter: `user="${userid}"`,
+		expand: 'user',
+		fetch
+	});
+
+	return posts.reduce<(Post & RecordModel)[]>((prev, cur) => {
+		const post = cur;
+
+		if (!cur.expand) {
+			return prev;
+		}
+
+		post.user = cur.expand.user;
+
+		if (!isValidPost(post)) {
+			return prev;
+		}
+
+		return [...prev, post];
+	}, []);
 }

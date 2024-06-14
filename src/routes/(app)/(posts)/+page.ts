@@ -1,7 +1,7 @@
 import { getAllPosts } from '$lib/db/posts';
 
-export const load = async () => {
+export const load = async ({ fetch }) => {
 	return {
-		posts: getAllPosts()
+		posts: getAllPosts(fetch)
 	};
 };

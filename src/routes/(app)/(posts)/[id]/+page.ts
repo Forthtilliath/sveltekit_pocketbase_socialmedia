@@ -1,10 +1,9 @@
-import { assertsIsNotNull } from '$lib/asserts';
+import { getPostById } from '$lib/db/posts.js';
+import { handleError } from '$lib/helpers.js';
 import { pb } from '$lib/pocketbase';
-import { isValidPost } from '$lib/types';
-import type Client from 'pocketbase';
 import { get } from 'svelte/store';
 
-export const load = async ({ params }) => {
+export const load = async ({ params, fetch }) => {
 	const pbInstance = get(pb);
 	if (!pbInstance) {
 		return {
@@ -14,38 +13,9 @@ export const load = async ({ params }) => {
 
 	try {
 		return {
-			post: await getPost(pbInstance, params.id)
+			post: await getPostById(params.id, fetch)
 		};
 	} catch (error) {
-		if (error instanceof Error) {
-			console.log(error.message);
-			return {
-				message: error.message
-			};
-		}
-		return {
-			message: 'Unknown error'
-		};
+		handleError('', 'Unknown error')(error);
 	}
 };
-async function getPost(pbInstance: Client, id: string) {
-	assertsIsNotNull(pbInstance);
-
-	const result = await pbInstance.collection('posts').getOne(id, {
-		expand: 'user'
-	});
-
-	const post = result;
-
-	if (!result.expand) {
-		throw new Error('Post not found');
-	}
-
-	post.user = result.expand.user;
-
-	if (!isValidPost(post)) {
-		throw new Error('Post not found');
-	}
-
-	return post;
-}

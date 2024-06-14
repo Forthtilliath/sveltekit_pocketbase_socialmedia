@@ -1,11 +1,10 @@
 import { pb } from '$lib/pocketbase';
 import { get } from 'svelte/store';
 import type { PageLoad } from './$types';
-import { isValidPost, isValidUser, type Post } from '$lib/types';
-import type { RecordModel } from 'pocketbase';
-import type Client from 'pocketbase';
+import { isValidUser } from '$lib/types';
+import { getPostsByUserid } from '$lib/db/posts';
 
-export const load = (async ({ params }) => {
+export const load = (async ({ params, fetch }) => {
 	const pbInstance = get(pb);
 
 	if (!pbInstance) {
@@ -17,7 +16,7 @@ export const load = (async ({ params }) => {
 	}
 
 	try {
-		const user = await pbInstance.collection('users').getOne(params.id);
+		const user = await pbInstance.collection('users').getOne(params.id, { fetch });
 
 		if (!isValidUser(user)) {
 			throw new Error('Post not found');
@@ -26,7 +25,7 @@ export const load = (async ({ params }) => {
 		return {
 			result: {
 				user,
-				posts: getPosts(pbInstance, user)
+				posts: getPostsByUserid(user.id, fetch)
 			}
 		};
 	} catch (error) {
@@ -37,30 +36,3 @@ export const load = (async ({ params }) => {
 		};
 	}
 }) satisfies PageLoad;
-
-async function getPosts(pbInstance: Client, user: RecordModel) {
-	if (!pbInstance) {
-		throw new Error('User not found');
-	}
-
-	const posts = await pbInstance.collection('posts').getFullList<Post & RecordModel>({
-		filter: `user="${user.id}"`,
-		expand: 'user'
-	});
-
-	return posts.reduce<(Post & RecordModel)[]>((prev, cur) => {
-		const post = cur;
-
-		if (!cur.expand) {
-			return prev;
-		}
-
-		post.user = cur.expand.user;
-
-		if (!isValidPost(post)) {
-			return prev;
-		}
-
-		return [...prev, post];
-	}, []);
-}

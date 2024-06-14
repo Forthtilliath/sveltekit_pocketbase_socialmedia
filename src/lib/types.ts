@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isPrimitiveArray, isString } from './helpers';
 
 export const UserSchema = z.object({
 	id: z.string(),
@@ -52,15 +53,4 @@ export function isValidUser(user: unknown): user is User {
 
 export function isValidPost(post: unknown): post is Post {
 	return PostSchema.safeParse(post).success;
-}
-
-export function isPrimitiveArray<T extends string | number | boolean>(
-	value: unknown,
-	type: 'string' | 'number' | 'boolean'
-): value is T[] {
-	return Array.isArray(value) && value.every((item) => typeof item === type);
-}
-
-export function isString(value: unknown): value is string {
-	return typeof value === 'string';
 }

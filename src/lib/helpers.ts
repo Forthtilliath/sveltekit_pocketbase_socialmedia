@@ -14,7 +14,7 @@
  * not an instance of `Error`, it returns an object with the `error` key set to the `errorKey` parameter
  * and the `message` key set to the `message` parameter.
  */
-export function handleError(errorKey: string, message: string) {
+export function handleError(errorKey: string, message: string): (error: unknown) => App.Error {
 	return (error: unknown) => {
 		if (error instanceof Error) {
 			return {
@@ -38,4 +38,13 @@ export function isPrimitiveArray<T extends string | number | boolean>(
 
 export function isString(value: unknown): value is string {
 	return typeof value === 'string';
+}
+
+export function isAppError(value: unknown): value is App.Error {
+	return (
+		value != null &&
+		typeof value === 'object' &&
+		'error' in value &&
+		'message' in value
+	);
 }

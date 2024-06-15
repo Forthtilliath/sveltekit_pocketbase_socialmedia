@@ -4,7 +4,10 @@ import PocketBase from 'pocketbase';
 // for information about these interfaces
 declare global {
 	namespace App {
-		// interface Error {}
+		interface Error {
+			error: string;
+			message: string;
+		}
 		interface Locals {
 			pocketBase: PocketBase;
 			pocketBaseAdmin: PocketBase;
@@ -14,9 +17,6 @@ declare global {
 			input: URL | RequestInfo,
 			init?: RequestInit | undefined
 		) => Promise<Response>;
-		// interface PageData {}
-		// interface PageState {}
-		// interface Platform {}
 	}
 }
 

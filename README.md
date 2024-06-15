@@ -33,3 +33,11 @@ You will need to create an account first in pocketbase admin. Create a ``.env`` 
 PRIVATE_POCKETBASE_EMAIL="EMAIL_USED_IN_POCKETBASE_ADMIN"
 PRIVATE_POCKETBASE_PASSWORD="PASSWORD_USED_IN_POCKETBASE_ADMIN"
 ```
+
+### Pocketbase exe
+
+You can use the pocketbase executable in the code-share directory, but if you prefer, you can download the last version of pocketbase from [here](https://github.com/pocketbase/pocketbase/releases).
+
+## Contributing
+
+From this playlist : [Create a Social Media platform using SvelteKit and PocketBase](https://www.youtube.com/watch?v=lmBGGgX4ULs&list=PLaczMID-f687PQq0ZpmJdSkpLUHnvqNIv).
